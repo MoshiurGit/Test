@@ -1,0 +1,359 @@
+
+SECTION - 18.	PYTEST - UNIT TESTING FRAMEWORK OF PYTHON.
+
+# Lesson: 74. Pytest and its advantages.
+
+# Any pytest file should start with 'test_' or will end with '_test'. Because in framework it will pick only those
+# testcases. if we run a file like conventional python way then it will not print anything. So we have to run it in
+# command prompt or test runner available in pycharm. All methods will be in a testcase. All method name should also 
+# start with 'test_'and all codes should be rapped into a method. In pytest every method is treated as one testcase.
+
+import pytest
+
+
+# @pytest.mark.smoke
+# def test_firstprogram(fix_setup):
+#     print("Hello")
+
+
+# Lesson: 75: Grouping tests with pytest marks to run selected group.
+
+# Now we will see how to do with pytest testcase with cmd prompt. if we want to trigger all the test cases at a time
+# then in the cmd prompt, we need to change the dir after copying path from package and the command is 'py.test'.
+# 'C:\Users\lenovo\PycharmProjects\projectOne\test_pytest>py.test''
+# To get more information of terminal with command we need to add '-v' (verbose).
+# 'C:\Users\lenovo\PycharmProjects\projectOne\test_pytest>py.test -v'
+# In pytest by default console log are not shown but if we want to see then the command is: '-s'. Test runner has by
+# default '-v -s' flags.
+# 'C:\Users\lenovo\PycharmProjects\projectOne\test_pytest>py.test -v -s'.
+
+
+def test_firstCreditCard():
+    print('Good Morning.')
+
+
+# lesson: 75 -76. Running pytest from terminal with different command flags.
+
+# Here we want to do some assertion. In pytest we can not have same name with more than one method/testcase. if there is
+# any then it will over ride the result of previous one. pytest is recommended to run with cmd prompt because later when
+# when we integrated with jankin then we have to run with cmd prompt only, it is core part of pytest. We do not need to
+# depend upon tool on pychram.
+
+import pytest
+
+
+@pytest.mark.smoke
+#@pytest.mark.skip
+@pytest.mark.xfail
+def test_thirdprogram():
+    msg = 'Hello'
+    assert msg == 'Hi', 'Test failed because the condition do not match.'
+
+# def test_SecondCreditCard(fix_setup):
+#     a = 4
+#     b = 6
+#     assert a + 2 == 6, 'Addition does not match.'
+
+
+# Lesson: 77. How to run selected pytests from set of tests.
+
+
+# if want to run a specific file then cmd prompt should have that file name like:
+# 'C:\Users\lenovo\PycharmProjects\projectOne\test_pytest>py.test test_demo_2.py -v -s'
+# Now we will see how to run one testcase from one file and another test case from another file. Based on test method
+# name we can do that. Now we will run those methods which has 'CreditCard' name in the methods. '-k' stands for regEx
+# Now the cmd prompt will look for all methods having 'CreditCard' in name from all files. It will skip other methods
+# from all files. command: 'C:\Users\lenovo\PycharmProjects\projectOne\test_pytest>py.test -k CreditCard -v -s'. It also
+# tell how many are deselected. -k stand for method name execution, -s logs in out put, -v stands for more info/metadata.
+
+
+# Lesson: 78. Grouping tests with pytest marks to run selected group.
+
+
+# Now we will run only smoke testcases which are selected such. top of method name need to add '@pytest.mark.smoke'.
+# Here we can use any name as used 'smoke' here. '@pytest." will import 'Import pytest'. Now we will run only those
+# testcase marked with 'smoke'. command: 'C:\Users\lenovo\PycharmProjects\projectOne\test_pytest>py.test -m smoke -v -s'
+# '-m' stands for mark. Here warning is coming from configuration option, will learn later.
+
+# Now we want to skip a test from all tests, may be there are some known bugs in that test. we marked the intended test
+# case with '@pytest.mark.skip'. command: 'C:\Users\lenovo\PycharmProjects\projectOne\test_pytest>py.test -v -s'
+
+# Now I want to skip that testcase without reporting but its important to run that skipped testcase as it has connection
+# with another testcase later in the module. marked with '@pytest.mark.xfail'. This is a unique annotation which are not
+# available in other framework.
+
+
+# Lesson-79: What is fixtures and their importance in pytest framework.
+
+# It works as setup method in test, like annotation method in test_ng. It works like a pre-request and after-request
+# annotation in the execution sequence of test. We can declare it anywhere in the test at the beginning or end.
+# In real time, we use this to opening browser, setup conf files, setup database, environment variable etc.  Yield is
+# (called as tear-down)use to close the browser, clear cache, delete cookies after testcase execution is done.
+# '@pytest.fixture()' will 'import pytest'. we need to pass method name (fix_setup) in the argument of method and
+# 'yield' will execute last. Method where '@pytest.fixture()' is added will execute first.
+
+# import pytest
+#
+#
+# @pytest.fixture()
+# def fix_setup():
+#     print("'I will be executed first because of having fixture.'")
+#     yield
+#     print("I will be executed last because of having yield tag.")
+
+
+def test_secondCode(fix_setup):
+    print("I will be executed in the middle between fixture and yield.")
+
+
+# Lesson-80: Importance of 'conftest' file and scope of fixtures for building generic fixtures.
+
+# The convention is to name the file as 'conftest'. It optimize and generalize all codes which are common in all
+# testcases. We will remove all generalize code from other test cases and pass an argument in the methods of
+# test cases we need. Here with 'conftest' file, we executed test_demo_1. We use this when we are sure that these
+# codes will be used in other files as a common. When we do 'conftest', it will be available to all files in that folder.
+
+import pytest
+
+
+@pytest.fixture(scope="class")
+def fix_setup():
+    print("'I will be executed first because of having fixture.'")
+    yield
+    print("I will be executed last because of having yield tag.")
+
+# making a method for data load. we are sending this data as we need it.
+
+@pytest.fixture()
+def dataload():
+    print("user profile data is being created.")
+    return ["Rahul", "Shetty", "rahulshettyacademy.com"]
+
+
+# I want to run a test with multiple browsers
+
+# @pytest.fixture(params=["chrome", "Firefox", "IE"])
+# def crossBrowser(request):
+#     return request.param
+
+
+# Now we may have multiple data. earlier we had only one value. In that case we need to rapped all the data.
+
+
+@pytest.fixture(params=[("chrome", "Rahul", "Shetty"), ("Firefox","Shetty"), ("IE", "ss")])
+def crossBrowser(request):
+    return request.param
+
+# Lesson-80.contiune:
+
+# Instead of generalize fixture in methods, as seen earlier. We can make fixture properties available in a class for
+# optimization. If we declare fixture in class, it will be global. Annotation "@pytest.mark.usefixtures("setup")",
+# fixture argument will be passed here only. Through 'class', It will rap all test cases with fixture features.
+# Here in terminal each method will rap with fixture.
+
+# Now if we want to run fixture only once at the beginning and at the end. In previous case fixture was running with
+# all the methods in the class. Then we can declare in the 'conftest' file argument like:
+# '@pytest.fixture(scope="class")'. If we do this fixture will be available at class level only, previously it was
+# available at all methods level for any file.
+
+import pytest
+
+
+@pytest.mark.usefixtures("fix_setup")
+class TestFixClass:
+
+    def test_fix_demo1(self):
+        print(" I come from test_demo_1.")
+
+    def test_fix_demo2(self):
+        print(" I come from test_demo_2.")
+
+    def test_fix_demo3(self):
+        print(" I come from test_demo_3.")
+
+    def test_fix_demo4(self):
+        print(" I come from test_demo_4.")
+
+
+
+
+# Lesson-81: Introduction to Data Driven Fixtures to load data into tests.
+
+# Data sets have to be ready before load to test. We can load data from fixture to actual test. We will use a user
+# profile page where we need to upload user name, email etc into test cases. We have to create a fixture in the
+# 'conftest' adding a method like 'def dataload()' with '@pytest.fixture()'. Though we declare dataload as global, but
+# in method parameter 'def test_editProfile(self, dataload), we need to pass this as it returns data from the 'conftest'
+# file. In previous example we did not return anything so it worked independently so no argument needed to pass but
+# here we are doing different. When returning, it is mandatory to pass the fixture name as argument in the method.
+# we have to setup data in a fixture with 'conftest' file.
+
+import pytest
+
+
+@pytest.mark.usefixtures("dataload")
+class TestExample2:
+    def test_editProfile(self, dataload):
+        print(dataload)
+# by index we can print each data
+        print(dataload[0])
+        print(dataload[1])
+        print(dataload[2])
+# using this, we can take all data in a list for a variable and use them.
+
+
+# Lesson 82: Parameterization test with multiple data sets using fixture. 
+
+# Here self parameter is not required as we are # not raping anything here. to mention that this fixture is 
+# parameterized we need to pass an argument 'params=with data we need in the method of conftest file like 
+#'@pytest.fixture(params=["chrome", "Firefox", "IE"])'. In first run it
+# will pick chrome so on. Now to send the date the instance is "request" which will be pass in the method. we need to
+# have a 'return request.param'. "request' here works like an object. This test will run for three times.
+
+# def test_crossBrowser(crossBrowser):
+#     print(crossBrowser)
+
+
+# Now I am interested to print index 1 only. It will show the parameterization of multiple data.
+def test_crossBrowser(crossBrowser):
+    print(crossBrowser[1])
+
+
+# Lesson-83: Generating HTML reports for pytest testcases.
+
+# we need to install html from command 'pip install pytest-html' on the cmd prompt path, working before. Then we can
+# generate report for all test cases on html with cmd prompt 'py.test --html=report.html'. '--html' is the tag for
+# reporting. More logs: 'C:\Users\lenovo\PycharmProjects\projectOne\test_pytest>py.test --html=report.html -s'.
+# Find the file from copying the path of 'report.html' file available on the folder and paste it on google. A report
+# will be generated on browser.
+
+
+SECTION-19.	LOGGING AND GENERATING HTML REPORTS IN PYTHON FRAMEWORK.
+
+
+# Lesson-84. Introduction to logging in python tests.
+
+# Types of logs: Debug, Info, Warning, Error, Critical.
+# Python has a package for logs. Logs should have time stamp in plain language. 
+
+
+
+# Lesson - 85: Importance of filehandler in logging tests.
+# Lesson - 86: Building reusable utility for logging to inject into framework.
+
+import logging
+
+def test_loggingDemo():
+# Python has logging packages as internal package. We have to create an object which will help to log. logging has a
+# method 'logging.getLogger(Name)'. We need to send an argument otherwise in the result the testcase name will not
+# appear. Command:' logger = logging.getLogger(__name__) '.  Now we have to see where this log will be stored, for that
+# a method 'add.Handler' is available. We need to give object logger with information where to print and in what format.
+# this format can be customized as we want. What format and what file, everything need to send in addHandler method.
+# fileHandler is an object for fileHandler location. We make an object 'file_handler' which will show where the file
+# is printed, we need to pass the file name. 'logger' is the main object who is responsible for print out.
+
+    logger = logging.getLogger(__name__)
+# another package that parent 'logging' provides '.Formatter()' with formatter pass "%(asctime)s"- it will print time
+# 's' as string, '%(levelname)s' it will show what kind of warning log has, '.getLogger(__name__)' will get the name of
+# testcase with ' %(name)s', actual message will be given by '%(message)'.
+    fileHandler = logging.FileHandler('logfile.log')
+    formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(name)s: %(message)s")
+    fileHandler.setFormatter(formatter)
+# Now logger object has knowledge to print it in file but it do not have knowledge about format. we need to give
+# connection. For file, connection was given by addHandler method. Now to give format knowledge to logger object.
+# give format information to FileHandler. Make an object nemed 'formatter' and put this in with '.setFormatter()'
+# method. like:'file_Handler.setFormatter(formatter)'.
+
+    logger.addHandler(fileHandler)
+# Now we have to give information about warning and set level. Order is 'debug', 'info', 'warning', 'error' & 'critical'
+# if we set level to debug then all logs will set in output. To get only 'error' and if we set then only 'error' &
+# 'critical' will display. If we set level to 'warning' then warning, error, and critical will display. Now we will set
+# level at info.
+    logger.setLevel(logging.CRITICAL)
+
+    logger.debug("A debug statement is executed.")
+    logger.info("Information statement.")
+    logger.warning("The balance is less.")
+    logger.error("A major error has happend.")
+    logger.critical("Critical Issue.")
+# We can find all the messages in formatted form in the logfile.log.
+
+
+
+# Lesson-87. Integrating pytest into html reporting.
+
+# Here instead of duplicating code, will bring all the files in folder in a class. we will make a class and inheritance
+# this BaseClass object to other test file (as child class) in 'test_fix_data.py' and print in html. 'BaseClass' will
+# be the core file for reporting in html report (logs and format). Here with 'logger' object we return all those values.
+# It is better to take the output in an object and generate html report from there without print command.
+#
+import inspect
+import logging
+
+class BaseClass:
+
+    def getLogger(self):
+        loggerName = inspect.stack()[1][3]
+        logger = logging.getLogger(loggerName)
+
+        fileHandler = logging.FileHandler('logfile.log')
+        formatter = logging.Formatter("%(asctime)s: %(levelname)s: %(name)s: %(message)s")
+        fileHandler.setFormatter(formatter)
+
+        logger.addHandler(fileHandler)
+        logger.setLevel(logging.DEBUG)
+        return logger
+    
+# Following code is from lesson-81.
+
+# Here it is important to following annotation for child class 'from test_pytest.BaseClass import BaseClass' and pass
+# the Parent class name to child method like 'class TestExample2(BaseClass)'. Now we will take all 'logger' into an
+# object 'log' for html. print command no required. in log file file name is giving wrong (referring to Base Class).
+# To correct it, in BaseClass we have to do following. 'inspection' is a package.
+# def getLogger(self):
+#     loggerName = inspect.stack()[1][3]
+#     logger = logging.getLogger(loggerName)
+
+import pytest
+
+from test_pytest.BaseClass import BaseClass
+@pytest.mark.usefixtures("dataload")
+
+class TestExample2(BaseClass):
+
+    def test_editProfile(self, dataload):
+        log = self.getLogger()
+        log.info(dataload[0])
+        log.info(dataload[2])
+
+        print(dataload[2])
+
+# we will get log in html with 'file:///C:/Users/lenovo/PycharmProjects/projectOne/test_pytest/report.html' in browser.
+# Python has ability to get logger object in html report. It can not do with print command.
+
+
+
+
+# Lesson-88. Nil.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

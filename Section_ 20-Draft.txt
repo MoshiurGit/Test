@@ -1,0 +1,236 @@
+# SECTION- 20: DEVELOPING END TO END SELENIUM PYTHON FRAMEWORK.
+
+# Lesson-90: Standards of writing Selenium Test in Framework.
+# Lesson-91: How to generate browser invocation code.
+# Lesson-92: Creating setup fixtures  and passing class objects to test.
+# Lesson-93: Passing command line options to selected browser at run time.
+# Lesson-94: What is page object design pattern and its importance.
+# Lesson-95: Implementing Page objects mechanism into framework.
+# Lesson-96: Smart way optimization page objects by removing object creation.
+# Lesson-97: Creating custom utilities in selenium python framework.
+------------------------------------------------------------------------------------------------------------------------
+
+
+# Here all the files will be written with pytest standards. We will make a class 'TestOne' and rap all 'Blackberry' code
+# inside. All imports should go above the class. Browser invocation code should be generic because it will be used for
+# all files. Best place to put this code in 'conftest' file with a fixture.
+
+from selenium.webdriver.support import expected_conditions
+from selenium.webdriver.support.wait import WebDriverWait
+from selenium.webdriver.common.by import By
+
+from page_object import homePage
+from page_object.checkOutPage import CheckOutPage
+from testss.utilities.BaseClass import BaseClass
+from page_object.homePage import HomePage
+
+# if we want to make it simple then here we can add '@pytest.mark.usefixtures("setup")' again declare it at method level
+# like 'def test_e2e(self, setup)' with 'setup.find_element(By.LINK_TEXT("Shop")).click()'. If we do this then
+# in every class we need to use this code. we can optimized it by calling from parent/child class. we can remove
+# '@pytest.mark.usefixtures("setup")' and inheritance parent class here in 'class TestOne(BaseClass)"  and remove
+# 'setup' from method level 'def test_e2e(self)".
+
+class TestOne(BaseClass):
+
+    def test_e2e(self):
+        # here we are creating a HomPage object to actual test case & give connection to homePage.py file.
+        HomPage = HomePage(self.driver) # HomPage is a object. Driver from here will have connection with homePage
+        # constructor. Driver here is actual driver and driver in homePage is local driver.
+        HomPage.shopItems() # This will replace "self.driver.find_element(By.LINK_TEXT("Shop"))". So we
+        # have remove one locator from test case in first page and handle it in page object. Operations like '.click()'
+        # we give in testcase but hard coding should remain in page object. .click() was removed from here.
+        #chkOutPage = CheckOutPage(self.driver) # this line will replace "driver.find_element(By.XPATH
+        # ("//button[@class='btn btn-info']"))". Here in every case we are creating object which will be discard later.
+        chkOutPage = homePage.shopItems() # we are importing from homePage.py and removing chekOutPage object here.
+        chkOutPage.productNames().click()
+
+# Before this we use to use driver as stand alone. Now we are calling driver object from 'conftest' file. so it need to
+# get connection from that file. As such 'self' is added with all driver objects. Example calling variable in class
+# through 'self'. This is the way we can pass driver from fixture to test cases.
+
+        #self.driver.find_element(By.LINK_TEXT("Shop")).click()
+
+        #print(self.driver.find_element(By.LINK_TEXT("Blackberry")).text)
+
+
+
+        # Page-2:
+
+        products = self.driver.find_elements(By.XPATH("//div[@class='card h-100']"))
+        for product in products:
+            print(product.find_element(By.XPATH("div/h4/a")).text)
+            productName = product.find_element(By.XPATH("div/h4/a")).text
+            if productName == "Blackberry":
+                chkOutPage.checkoutbutton.click() # Here find_element command is replaced by checkOutPage.py
+
+        self.driver.find_element(By.XPATH("//a[@class='nav-link btn btn-primary']")).click()
+        confirmpage = CheckOutPage.button()
+
+        #self.driver.find_element(By.XPATH("//button[@class='btn btn-success']")).click()
+
+        # Page-3:
+
+        self.driver.find_element(By.ID("country")).send_keys("Ind")
+# Here we will work on how to create custom utilities. This explicit wait can go to BaseClass.py since it will be invoke
+# by all test cases. If there are multiple lines or functions involved.
+#         wait = WebDriverWait(self.driver, 7)
+#         wait.until(expected_conditions.presence_of_element_located((By.LINK_TEXT, "India")))
+
+        self.verifylinkpresence("India")
+        self.driver.find_element(By.LINK_TEXT("India")).click()
+
+        self.driver.find_element(By.XPATH("//div[@class='checkbox checkbox-primary']")).click()
+        self.driver.find_element(By.CSS_SELECTOR("input[value='Purchase']")).click()
+
+        print(self.driver.find_element(By.CSS_SELECTOR(".alert-success")).text)
+
+# Now if we go to cmd prompt on the dir "testss" is present & command like 'py.test' then it will invoke browser and run
+# the test. My one is not working since it has 'deprecation warning' and driver.find_element_ command is also changed
+# with By. method.
+
+----------------------------------------------------------------------------------------------------------------------
+
+BaseClass.py
+----------------------------------------------------------------------------------------------------------------------
+
+
+import pytest
+# pass is used no to do any operation in this method. "@pytest.mark.usefixtures("setup")", this Base Class has the
+# knowledge of setup.
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions
+from selenium.webdriver.support.wait import WebDriverWait
+
+
+@pytest.mark.usefixtures("setup")
+class BaseClass:
+
+    def verifylinkpresence(self, text):
+        wait = WebDriverWait(self.driver, 7)
+        # here we will make the text more generic removing 'India'. we will put argument 'text' in method so that it can
+        # be used number of cases. This is called utility and we can make number of utility.
+        wait.until(expected_conditions.presence_of_element_located((By.LINK_TEXT, text)))
+
+
+------------------------------------------------------------------------------------------------------------------
+
+conftest.py
+------------------------------------------------------------------------------------------------------------------
+
+import pytest
+from selenium.webdriver.firefox import webdriver
+
+
+# We like to give cmd line argument like if we want to run the test in chrome or firefox/IE then it should run in
+# cmd prompt. command 'py.test --browser_name chrome / py.test --browser_name firefox'. It should be configure in
+# 'conftest' file. We have to give keyvalue like browser name . it will be control from cmd terminal. It should be
+# done in a method which is called 'hooks'. Here cmdopt=keyvalue(browser_name),action='storing'(it is like storing
+# result ; default value) and default=any browser (if not given then default browser will invoke).
+# Syntex of cmdline hook:
+
+
+def pytest_addoption(parser):
+    parser.addoption(
+        "--browser_name", action='store', default="chrome"
+    )
+
+
+@pytest.fixture(scope="class")
+# fixture is created at class level. This fixture will be used at one time so it is declared at class level.
+def setup(request):
+# to retrive keyvalue we need to add an object 'Browser_Name':
+    Browser_Name = request.config.getoption("browser_name")
+
+    if Browser_Name == "firefox":
+        driver = webdriver.Firefox(executable_path=r'C:\\Users\\lenovo\\geckodriver.exe')
+    elif Browser_Name == "chrome":
+        driver = webdriver.Chrome(executable_path=r'C:\\Users\\lenovo\\chromedriver.exe')
+
+    driver.get("https://rahulshettyacademy.com/angularpractice/")
+    driver.maximize_window()
+
+    request.cls.driver = driver
+# When we invoke browser that need to be close at end. Here 'return' & 'Yield' do not work together. The best practice
+# is 'request' instance for this fixture. It comes by default and set at method level. Now we need to tie up this
+# instance with class instance. 'request.cls.driver=driver'. Now the driver we created in 'conftest' file (local driver)
+# will be send to class driver. Here we do not return anything but it is auto transfer to class driver.
+#
+    yield
+    driver.close()
+
+-------------------------------------------------------------------------------------------------------------------------
+
+homePage.py
+--------------------------------------------------------------------------------------------------------------------------
+
+# here each page will will form a class for benefits.
+from selenium.webdriver.common.by import By
+# Here class HomePage is created to have Page Object Design Pattern.
+from page_object.checkOutPage import CheckOutPage
+
+
+class HomePage:
+    # here driver will show error because no constructor is made in the class. This driver can not connect
+    # earlier driver.
+    def __init__(self, driver): # doing this we are sending actual driver (test_e2e.py) to local class driver
+        # (homePage.py).
+        self.driver = driver
+
+    shop = (By.LINK_TEXT, "Shop")
+
+    def shopItems(self):
+        self.driver.find_element(*HomePage.shop).click()
+        chkOutPage = CheckOutPage(self.driver)
+        return chkOutPage
+
+
+        #return self.driver.find_element(*HomePage.shop) # class_name (calling from class variable). self has to be
+        # added since there is no driver here, it will come from original testcase so a constructor need to be added.
+        # This is same as: driver.find_element(By.LINK_TEXT("Shop")) in test_e2e.py. "*" is add to make the variable
+        # shop as a tuple and deserialized. when web element is defined as variable and call them in class we have to
+        # do in this way. Here 'return self.driver.find_element(*HomePage.shop)' is a instance access of driver.
+# So far, we had been creating many objects, now we need to optimize it. Instead of 'return self.driver.find_element
+# (*HomePage.shop)', we can click here and go to next page object to work on various elements. We can avoid creating
+# an object "chkOutPage = CheckOutPage(self.driver)" in 'test_e2e.py' and put it here.
+
+--------------------------------------------------------------------------------------------------------
+
+CheckOutPage.py
+---------------------------------------------------------------------------------------------------------
+
+from selenium.webdriver.common.by import By
+
+from page_object.confirmPage import ConfirmPage
+
+
+class CheckOutPage:
+    def __init__(self, driver):
+        self.driver = driver
+    products = (By.XPATH, "//div[@class='card h-100']")
+    checkoutbutton = (By.XPATH, "//a[@class='nav-link btn btn-primary']")
+
+    def productNames(self):
+        return self.driver.find_elements(*CheckOutPage.products)
+
+    def button(self):
+        self.driver.find_elements(*CheckOutPage.checkoutbutton).click()
+        # adding confirmPage object here because after click we move to next page.
+        confirmPage = ConfirmPage(self.driver) # here we are creating a trigger point to confirmPage.
+        return confirmPage
+
+        # remove return command from here.
+
+-------------------------------------------------------------------------------------------------------
+
+confirmPage.py
+-------------------------------------------------------------------------------------------------------
+
+class ConfirmPage():
+    pass
+
+------------------------------------------End for Tast case-1 -------------------------------------------
+
+
+
+
+
